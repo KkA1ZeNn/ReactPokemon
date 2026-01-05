@@ -1,0 +1,25 @@
+.content__gallery {
+   width: 100%;
+   height: 72vh;
+   display: flex;
+   flex-direction: column;
+   justify-content: space-between;
+}
+
+.gallery__wrapper {
+   width: 100%;
+   height: 93%;
+   display: grid;
+   grid-template-columns: repeat(4, 1fr);
+   grid-template-rows: repeat(2, 1fr);
+   gap: 1rem;
+}
+
+.gallery__pagination {
+   height: 6%;
+   margin: 0 auto;
+   width: 15%;
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+}

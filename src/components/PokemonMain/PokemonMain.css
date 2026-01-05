@@ -1,0 +1,21 @@
+.pokemon-main__content {
+   height: 100%;
+   width: 100%;
+   max-width: 1440px;
+   margin: 0 auto;
+   display: flex;
+   flex-direction: column;
+   padding: 0.5vh 0.5vw;
+}
+
+.content__logo {
+   background-image: url("../../assets/image 1.svg");
+   background-size: contain;
+   background-repeat: no-repeat;
+   background-position: center;
+   margin: 0 auto;
+   width: 100%;
+   height: 16vh;
+   max-height: 318px;
+   min-height: 160px;
+}
