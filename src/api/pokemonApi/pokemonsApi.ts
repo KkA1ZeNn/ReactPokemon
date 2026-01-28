@@ -6,7 +6,7 @@ interface CachedData<T> {
 }
 
 class PokemonsCache {
-  private cache: Map<string, CachedData<any>> = new Map();
+  private cache = new Map<string, CachedData<unknown>>();
   private ttl: number = 1000 * 60 * 5; // 5 минут
 
   get<T>(key: string): T | null {
@@ -103,6 +103,7 @@ export interface PokemonSpecies {
   capture_rate: number;
   is_legendary: boolean;
   is_mythical: boolean;
+  evolution_chain?: NamedAPIResource; // ссылка на цепочку эволюции
 }
 
 export interface TypeListResponse {
@@ -125,8 +126,9 @@ export interface EvolutionChain {
   chain: EvolutionChainLink;
 }
 
-export interface PokemonWithEvolution {
+export interface PokemonFullInfo {
   pokemon: Pokemon;
+  rarity: string;
   evolutionChain: EvolutionChain;
 }
 
@@ -169,24 +171,6 @@ export const POKEMON_API = {
    },
 
   /**
-   * Получить 8 покемонов для галереи 
-   * @param offset - Смещение для пагинации (по умолчанию 0)
-   * @returns Массив покемонов с полной информацией
-   */
-   async getPokemonsForGallery(offset: number = 0): Promise<Pokemon[]> {
-      const listResponse = await fetchAPI<PokemonListResponse>(
-         `${BASE_URL}/pokemon/?limit=8&offset=${offset}`
-      );
-      
-      const promises = listResponse.results.map(async (item) => {
-         const id = item.url.split('/').filter(Boolean).pop();
-         return this.getPokemon(id || item.name);
-      });
-      
-      return Promise.all(promises);
-   },
-
-   /**
    * Получить 8 покемонов для галереи С редкостью
    * @param offset - Смещение для пагинации (по умолчанию 0)
    * @returns Массив покемонов с полной информацией включая редкость
@@ -217,43 +201,10 @@ export const POKEMON_API = {
    },
 
   /**
-   * Получить информацию о покемоне и его цепочке эволюции 
-   * @param idOrName - ID (число) или имя покемона (строка)
-   * @returns Покемон с полной информацией и цепочкой эволюции
-   */
-  async getPokemonWithEvolution(idOrName: number | string): Promise<PokemonWithEvolution> {
-    const pokemon = await this.getPokemon(idOrName);
-    
-    const pokemonData = await 
-    fetchAPI<{ species: NamedAPIResource }>(
-      `${BASE_URL}/pokemon/${idOrName}/`
-    );
-    
-    if (!pokemonData.species?.url) {
-      throw new Error('Не удалось получить информацию о виде покемона');
-    }
-    
-    // Получаем информацию о виде
-    const species = await fetchAPI<{ evolution_chain: NamedAPIResource }>(
-      pokemonData.species.url
-    );
-    
-    if (!species.evolution_chain?.url) {
-      throw new Error('Не удалось получить цепочку эволюции');
-    }
-    
-    const evolutionChain = await fetchAPI<EvolutionChain>(species.evolution_chain.url);
-    
-    return {
-      pokemon,
-      evolutionChain,
-    };
-  },
-
-  /**
    * Получить информацию о виде покемона (species) с редкостью
    * @param idOrName - ID (число) или имя покемона (строка)
    * @returns Информация о виде с capture_rate для определения редкости
+   * @private - используется только внутри API для оптимизации запросов
    */
   async getPokemonSpecies(idOrName: number | string): Promise<PokemonSpecies> {
     return await fetchAPI<PokemonSpecies>(`${BASE_URL}/pokemon-species/${idOrName}/`);
@@ -266,5 +217,38 @@ export const POKEMON_API = {
   async getAllTypes(): Promise<NamedAPIResource[]> {
     const response = await fetchAPI<TypeListResponse>(`${BASE_URL}/type/`);
     return response.results;
+  },
+
+  /**
+   * Получить ПОЛНУЮ информацию о покемоне (все в одном запросе)
+   * Включает: основную информацию, типы, редкость и цепочку эволюции
+   * @param idOrName - ID (число) или имя покемона (строка)
+   * @returns Полная информация о покемоне
+   */
+  async getPokemonFullInfo(idOrName: number | string): Promise<PokemonFullInfo> {
+    const pokemon = await this.getPokemon(idOrName);
+    
+    if (!pokemon.species?.url) {
+      throw new Error('Не удалось получить информацию о виде покемона');
+    }
+    
+    const species = await fetchAPI<PokemonSpecies & { evolution_chain: NamedAPIResource }>(pokemon.species.url);
+    
+    const rarity = getRarityFromSpecies(
+      species.is_legendary,
+      species.is_mythical
+    );
+    
+    if (!species.evolution_chain?.url) {
+      throw new Error('Не удалось получить цепочку эволюции');
+    }
+    
+    const evolutionChain = await fetchAPI<EvolutionChain>(species.evolution_chain.url);
+    
+    return {
+      pokemon: { ...pokemon, rarity },
+      rarity,
+      evolutionChain,
+    };
   },
 };

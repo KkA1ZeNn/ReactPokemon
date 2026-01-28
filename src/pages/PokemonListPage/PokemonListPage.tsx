@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import PokemonMainControl from '../../components/PokemonMainControl/PokemonMainControl';
 import PokemonMainGallery from '../../components/PokemonMainGallery/PokemonMainGallery';
 import { POKEMON_API } from '../../api/pokemonApi/pokemonsApi';
@@ -8,12 +9,24 @@ import { getPowerLevel } from '../../types/pokemonFiltes';
 import './PokemonListPage.css';
 
 const PokemonListPage = () => {
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    const pageFromUrl = searchParams.get('page');
+    const initialPage = pageFromUrl ? parseInt(pageFromUrl, 10) : 1;
+
     const [pokemons, setPokemons] = useState<Pokemon[]>([]);
     const [pokemonTypes, setPokemonTypes] = useState<NamedAPIResource[]>([]);
     const [paginationState, setPaginationState] = useState({
-        currentPage: 1,
-        rangeStart: 1
+        currentPage: initialPage,
+        rangeStart: initialPage <= 3 ? 1 : initialPage - 2
     });
+
+    // Устанавливаем page=1 в URL при первой загрузке, если его нет
+    useEffect(() => {
+        if (!pageFromUrl) {
+            setSearchParams({ page: '1' }, { replace: true });
+        }
+    }, []); // Только при монтировании
     const [filters, setFilters] = useState<PokemonFilters>({
         power: 'all',
         rarity: 'all',
@@ -96,11 +109,25 @@ const PokemonListPage = () => {
         getData();
     }, [currentPage])
 
+    // Синхронизируем URL с текущей страницей
+    useEffect(() => {
+        const pageFromUrl = searchParams.get('page');
+        if (!pageFromUrl || pageFromUrl !== currentPage.toString()) {
+            setSearchParams({ page: currentPage.toString() }, { replace: true });
+        }
+    }, [currentPage, searchParams, setSearchParams]);
+
     // Функции управления пагинацией
     const goToPage = (page: number) => {
+        const newRangeStart = page > pageRange.end
+            ? paginationState.rangeStart + 1
+            : page < pageRange.start
+                ? Math.max(1, paginationState.rangeStart - 1)
+                : paginationState.rangeStart;
+
         setPaginationState({
             currentPage: page,
-            rangeStart: paginationState.rangeStart // Диапазон не меняется
+            rangeStart: newRangeStart
         });
     };
 

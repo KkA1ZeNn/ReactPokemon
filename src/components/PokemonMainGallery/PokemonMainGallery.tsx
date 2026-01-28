@@ -1,12 +1,7 @@
 import type { Pokemon } from '../../api/pokemonApi/pokemonsApi'
-import {
-   TYPE_TRANSLATIONS,
-   RARITY_TRANSLATIONS,
-   TYPE_GRADIENTS,
-   RARITY_GRADIENTS
-} from '../../constants/pokemonConstants'
 import { useNavigate } from 'react-router-dom'
 import './PokemonMainGallery.css'
+import { getPokemonInfo } from '../../scripts/pokemonInfo'
 
 interface PokemonMainGalleryProps {
    pokemons: Pokemon[];
@@ -28,7 +23,8 @@ const PokemonMainGallery = ({
    const navigate = useNavigate();
 
    const handleCardClick = (pokemonId: number) => {
-      navigate(`/pokemon/${pokemonId}`);
+      // Сохраняем текущую страницу в URL при переходе
+      navigate(`/pokemon/${pokemonId}?page=${currentPage}`);
    };
 
    return (
@@ -36,29 +32,7 @@ const PokemonMainGallery = ({
          <div className='content__gallery'>
             <div className='gallery__wrapper'>
                {pokemons.map((pokemon) => {
-                  const sprite = pokemon.sprites.other?.['official-artwork']?.front_default ||
-                     pokemon.sprites.front_default ||
-                     'https://via.placeholder.com/150';
-
-                  const attackStat = pokemon.stats.find((stat) => stat.stat.name === 'attack')?.base_stat || 0;
-
-                  const types = pokemon.types
-                     .map(t => TYPE_TRANSLATIONS[t.type.name] || t.type.name)
-                     .join(' + ');
-
-                  const rarity = pokemon.rarity ? RARITY_TRANSLATIONS[pokemon.rarity] || pokemon.rarity : 'Обычный';
-
-                  // Определяем градиент для карточки
-                  let cardGradient: string;
-
-                  if (pokemon.rarity === 'mythical') {
-                     cardGradient = RARITY_GRADIENTS.mythical;
-                  } else if (pokemon.rarity === 'legendary') {
-                     cardGradient = RARITY_GRADIENTS.legendary;
-                  } else {
-                     const primaryType = pokemon.types[0]?.type.name || 'normal';
-                     cardGradient = TYPE_GRADIENTS[primaryType] || TYPE_GRADIENTS.normal;
-                  }
+                  const { sprite, types, attackStat, rarity, cardGradient } = getPokemonInfo(pokemon);
 
                   return (
                      <div
