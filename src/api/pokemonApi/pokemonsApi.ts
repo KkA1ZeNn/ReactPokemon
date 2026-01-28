@@ -1,5 +1,42 @@
 import { getRarityFromSpecies } from '../../types/pokemonFiltes';
 
+interface CachedData<T> {
+  data: T;
+  timestamp: number;
+}
+
+class PokemonsCache {
+  private cache: Map<string, CachedData<any>> = new Map();
+  private ttl: number = 1000 * 60 * 5; // 5 минут
+
+  get<T>(key: string): T | null {
+    const cached = this.cache.get(key);
+    
+    if (!cached) return null;
+
+    const isExpired = (Date.now() - cached.timestamp) > this.ttl;
+    if (isExpired) {
+      this.cache.delete(key);
+      return null;
+    }
+
+    return cached.data as T;
+  }
+
+  set<T>(key: string, data: T): void {
+    this.cache.set(key, {
+      data,
+      timestamp: Date.now()
+    });
+  }
+
+  clear(): void {
+    this.cache.clear();
+  }
+}
+
+const cache = new PokemonsCache();
+
 // Базовый URL API
 const BASE_URL = 'https://pokeapi.co/api/v2';
 
@@ -97,15 +134,22 @@ export interface PokemonWithEvolution {
 // Базовая функция для выполнения запросов
 async function fetchAPI<T>(url: string): Promise<T> {
   try {
+    const cachedData = cache.get<T>(url);
+    if (cachedData) {
+      return cachedData;
+    }
+
     const response = await fetch(url);
-    
+
     if (!response.ok) {
       throw new Error(
         `Ошибка при запросе к API: ${response.statusText}`
       );
     }
 
-    return await response.json();
+    const data = await response.json();
+    cache.set(url, data);
+    return data;
   } catch (error) {
     throw new Error(
       `Не удалось выполнить запрос: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`

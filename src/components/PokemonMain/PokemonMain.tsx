@@ -9,7 +9,11 @@ import './PokemonMain.css'
 
 const PokemonMain = () => {
    const [pokemons, setPokemons] = useState<Pokemon[]>([]);
-   const [pokemonTypes, setPokemonTypes] = useState<NamedAPIResource[]>([]); // Типы из API
+   const [pokemonTypes, setPokemonTypes] = useState<NamedAPIResource[]>([]);
+   const [paginationState, setPaginationState] = useState({
+      currentPage: 1,
+      rangeStart: 1
+   });
    const [filters, setFilters] = useState<PokemonFilters>({
       power: 'all',
       rarity: 'all',
@@ -18,6 +22,9 @@ const PokemonMain = () => {
 
    const [searchQuery, setSearchQuery] = useState('');
    const [debouncedSearch, setDebouncedSearch] = useState('');
+
+   const currentPage = paginationState.currentPage;
+   const pageRange = { start: paginationState.rangeStart, end: paginationState.rangeStart + 2 };
 
    const searchPokemons = (pokemons: Pokemon[], search: string) => {
       if (!search) return pokemons;
@@ -77,16 +84,51 @@ const PokemonMain = () => {
    useEffect(() => {
       const getData = async () => {
          try {
-            const pokemonsData = await POKEMON_API.getPokemonsWithRarity(0);
+            const offset = (currentPage - 1) * 8; // 8 покемонов на странице
+            const pokemonsData = await POKEMON_API.getPokemonsWithRarity(offset);
             setPokemons(pokemonsData);
-            console.log('Покемоны для галереи с редкостью:', pokemonsData);
+            console.log(`Покемоны для страницы ${currentPage}:`, pokemonsData);
          } catch (error) {
             console.error('Ошибка при загрузке данных:', error);
          }
       }
 
       getData();
-   }, [])
+   }, [currentPage])
+
+   // Функции управления пагинацией
+   const goToPage = (page: number) => {
+      setPaginationState({
+         currentPage: page,
+         rangeStart: paginationState.rangeStart // Диапазон не меняется
+      });
+   };
+
+   const goToNextPage = () => {
+      const nextPage = currentPage + 1;
+      const newRangeStart = nextPage > pageRange.end
+         ? paginationState.rangeStart + 1
+         : paginationState.rangeStart;
+
+      setPaginationState({
+         currentPage: nextPage,
+         rangeStart: newRangeStart
+      });
+   };
+
+   const goToPrevPage = () => {
+      if (currentPage === 1) return;
+
+      const prevPage = currentPage - 1;
+      const newRangeStart = prevPage < pageRange.start
+         ? Math.max(1, paginationState.rangeStart - 1)
+         : paginationState.rangeStart;
+
+      setPaginationState({
+         currentPage: prevPage,
+         rangeStart: newRangeStart
+      });
+   };
 
    const pokemonsForGallery = useMemo(() => {
       if (pokemons.length === 0) return [];
@@ -110,7 +152,14 @@ const PokemonMain = () => {
                pokemonTypes={pokemonTypes}
             />
 
-            <PokemonMainGallery pokemons={pokemonsForGallery} />
+            <PokemonMainGallery
+               pokemons={pokemonsForGallery}
+               currentPage={currentPage}
+               pageRange={pageRange}
+               goToPage={goToPage}
+               goToNextPage={goToNextPage}
+               goToPrevPage={goToPrevPage}
+            />
          </div>
       </>
    )
