@@ -1,13 +1,16 @@
 import './App.css'
-import PokemonMain from './components/PokemonMain/PokemonMain'
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import PokemonListPage from './pages/PokemonListPage/PokemonListPage';
+import PokemonDetailPage from './pages/PokemonDetailPage/PokemonDetailPage';
 
 function App() {
   return (
-    <>   
-      <div className='pokemon-app__wrapper'>
-         <PokemonMain />
-      </div>
-    </>
+    <BrowserRouter>
+      <Routes>
+        <Route path='/' element={<PokemonListPage />} />
+        <Route path='/pokemon/:id' element={<PokemonDetailPage />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
 

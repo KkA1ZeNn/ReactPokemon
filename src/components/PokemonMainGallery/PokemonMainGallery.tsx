@@ -5,6 +5,7 @@ import {
    TYPE_GRADIENTS,
    RARITY_GRADIENTS
 } from '../../constants/pokemonConstants'
+import { useNavigate } from 'react-router-dom'
 import './PokemonMainGallery.css'
 
 interface PokemonMainGalleryProps {
@@ -24,6 +25,11 @@ const PokemonMainGallery = ({
    goToNextPage,
    goToPrevPage
 }: PokemonMainGalleryProps) => {
+   const navigate = useNavigate();
+
+   const handleCardClick = (pokemonId: number) => {
+      navigate(`/pokemon/${pokemonId}`);
+   };
 
    return (
       <>
@@ -58,7 +64,8 @@ const PokemonMainGallery = ({
                      <div
                         key={pokemon.id}
                         className="gallery__item"
-                        style={{ background: cardGradient }}
+                        style={{ background: cardGradient, cursor: 'pointer' }}
+                        onClick={() => handleCardClick(pokemon.id)}
                      >
                         <div className="item__rarity">{rarity}</div>
                         <div className="item__image">
