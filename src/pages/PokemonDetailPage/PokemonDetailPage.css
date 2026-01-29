@@ -35,6 +35,7 @@
    height: 10%;
    max-height: 128px;
    min-height: 10%;
+   cursor: pointer;
 }
 
 .pokemon-info-container {
@@ -43,8 +44,9 @@
 }
 
 .pokemon-evolution-container {
-   width: 100%;
-   height: 100%;
+   width: 70%;
+   height: 39%;
+   margin: 0 auto;
 }
 
 .loading {

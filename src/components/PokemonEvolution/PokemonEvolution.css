@@ -1,4 +1,83 @@
 .pokemon-evolution {
     width: 100%;
     height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.pokemon-evolution__header {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 40px;
+    line-height: 130%;
+    letter-spacing: 0%;
+    text-align: center;
+    color: #323232;
+}
+
+.pokemon-evolution__list {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pokemon-evolution__item {
+    width: 25%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pokemon-evolution__item-name {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 25px;
+    line-height: 130%;
+    letter-spacing: 0%;
+    text-align: center;
+    color: #323232;
+    text-transform: capitalize;
+}
+
+.pokemon-evolution__image-wrapper {
+    width: 100%;
+    position: relative;
+    cursor: pointer;
+    border-radius: 30px;
+    padding: 4px;
+    transition: padding 0.2s ease;
+}
+
+.pokemon-evolution__image-wrapper--current {
+    padding: 8px;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.pokemon-evolution__item img {
+    width: 100%;
+    box-shadow: 0px 2px 8.7px rgba(0, 0, 0, 0.25);
+    border-radius: 26px;
+    display: block;
+    position: relative;
+    z-index: 1;
+}
+
+.pokemon-evolution__image-wrapper--with-arrow::after {
+    content: '';
+    position: absolute;
+    cursor: default;
+    top: 50%;
+    transform: translateY(-50%);
+    right: -45%;
+    width: 122px;
+    height: 70px;
+    background-image: url("data:image/svg+xml,%3Csvg width='122' height='70' viewBox='0 0 122 70' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg filter='url(%23filter0_d_141_448)'%3E%3Cpath d='M70.2699 24.6202H11.7C10.0431 24.6202 8.69995 25.9634 8.69995 27.6202V39.6202C8.69995 41.2771 10.0431 42.6202 11.7 42.6202H70.2699C71.9268 42.6202 73.2699 43.9634 73.2699 45.6202V56.1742C73.2699 58.5375 75.8755 59.9729 77.8731 58.7099L111.066 37.7241C112.83 36.6092 112.945 34.0792 111.29 32.8087L78.0968 7.3259C76.1235 5.811 73.2699 7.21781 73.2699 9.70551V21.6202C73.2699 23.2771 71.9268 24.6202 70.2699 24.6202Z' fill='%23323232'/%3E%3C/g%3E%3Cdefs%3E%3Cfilter id='filter0_d_141_448' x='-4.86374e-05' y='1.23978e-05' width='121.163' height='69.8791' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0' result='hardAlpha'/%3E%3CfeOffset dy='2'/%3E%3CfeGaussianBlur stdDeviation='4.35'/%3E%3CfeComposite in2='hardAlpha' operator='out'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0'/%3E%3CfeBlend mode='normal' in2='BackgroundImageFix' result='effect1_dropShadow_141_448'/%3E%3CfeBlend mode='normal' in='SourceGraphic' in2='effect1_dropShadow_141_448' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
 }

@@ -21,16 +21,15 @@ const PokemonListPage = () => {
         rangeStart: initialPage <= 3 ? 1 : initialPage - 2
     });
 
-    // Устанавливаем page=1 в URL при первой загрузке, если его нет
     useEffect(() => {
         if (!pageFromUrl) {
             setSearchParams({ page: '1' }, { replace: true });
         }
-    }, []); // Только при монтировании
+    }, []);
     const [filters, setFilters] = useState<PokemonFilters>({
         power: 'all',
         rarity: 'all',
-        element: [] // Пустой массив для множественного выбора
+        element: []
     });
 
     const [searchQuery, setSearchQuery] = useState('');
@@ -98,7 +97,7 @@ const PokemonListPage = () => {
         const getData = async () => {
             try {
                 const offset = (currentPage - 1) * 8; // 8 покемонов на странице
-                const pokemonsData = await POKEMON_API.getPokemonsWithRarity(offset);
+                const pokemonsData = await POKEMON_API.getPokemons(8, offset);
                 setPokemons(pokemonsData);
                 console.log(`Покемоны для страницы ${currentPage}:`, pokemonsData);
             } catch (error) {

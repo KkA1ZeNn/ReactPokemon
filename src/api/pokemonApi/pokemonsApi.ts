@@ -95,7 +95,8 @@ export interface Pokemon {
     slot: number;
   }>;
   species: NamedAPIResource; // ссылка на species для получения capture_rate
-  rarity?: string; // опциональное поле для редкости (legendary, rare, uncommon, common)
+  rarity: string; 
+  evolutionChain: EvolutionChain; 
 }
 export interface PokemonSpecies {
   id: number;
@@ -103,7 +104,7 @@ export interface PokemonSpecies {
   capture_rate: number;
   is_legendary: boolean;
   is_mythical: boolean;
-  evolution_chain?: NamedAPIResource; // ссылка на цепочку эволюции
+  evolution_chain?: NamedAPIResource;
 }
 
 export interface TypeListResponse {
@@ -126,10 +127,9 @@ export interface EvolutionChain {
   chain: EvolutionChainLink;
 }
 
-export interface PokemonFullInfo {
-  pokemon: Pokemon;
-  rarity: string;
-  evolutionChain: EvolutionChain;
+export interface EvolutionChainElement {
+  name: string;
+  url: string;
 }
 
 
@@ -161,78 +161,24 @@ async function fetchAPI<T>(url: string): Promise<T> {
 
 // API функции
 export const POKEMON_API = {
-     /**
-   * Получить информацию о конкретном покемоне 
-   * @param idOrName - ID (число) или имя покемона (строка)
-   * @returns Покемон с полной информацией 
-   */
-   async getPokemon(idOrName: number | string): Promise<Pokemon> {
-      return await fetchAPI<Pokemon>(`${BASE_URL}/pokemon/${idOrName}/`);
-   },
-
   /**
-   * Получить 8 покемонов для галереи С редкостью
-   * @param offset - Смещение для пагинации (по умолчанию 0)
-   * @returns Массив покемонов с полной информацией включая редкость
-   */
-   async getPokemonsWithRarity(offset: number = 0): Promise<Pokemon[]> {
-      const listResponse = await fetchAPI<PokemonListResponse>(
-         `${BASE_URL}/pokemon/?limit=8&offset=${offset}`
-      );
-      
-      const promises = listResponse.results.map(async (item) => {
-         const id = item.url.split('/').filter(Boolean).pop();
-         const pokemonId = id || item.name;
-         
-         const [pokemon, species] = await Promise.all([
-            this.getPokemon(pokemonId),
-            this.getPokemonSpecies(pokemonId)
-         ]);
-         
-         const rarity = getRarityFromSpecies(
-            species.is_legendary, 
-            species.is_mythical
-         );
-         
-         return { ...pokemon, rarity };
-      });
-      
-      return Promise.all(promises);
-   },
-
-  /**
-   * Получить информацию о виде покемона (species) с редкостью
-   * @param idOrName - ID (число) или имя покемона (строка)
-   * @returns Информация о виде с capture_rate для определения редкости
-   * @private - используется только внутри API для оптимизации запросов
-   */
-  async getPokemonSpecies(idOrName: number | string): Promise<PokemonSpecies> {
-    return await fetchAPI<PokemonSpecies>(`${BASE_URL}/pokemon-species/${idOrName}/`);
-  },
-
-  /**
-   * Получить список всех типов покемонов (fire, water, grass и т.д.)
-   * @returns Массив всех доступных типов
-   */
-  async getAllTypes(): Promise<NamedAPIResource[]> {
-    const response = await fetchAPI<TypeListResponse>(`${BASE_URL}/type/`);
-    return response.results;
-  },
-
-  /**
-   * Получить ПОЛНУЮ информацию о покемоне (все в одном запросе)
+   * Получить ПОЛНУЮ информацию о покемоне 
    * Включает: основную информацию, типы, редкость и цепочку эволюции
    * @param idOrName - ID (число) или имя покемона (строка)
-   * @returns Полная информация о покемоне
+   * @returns Покемон с полной информацией включая редкость и цепочку эволюции
    */
-  async getPokemonFullInfo(idOrName: number | string): Promise<PokemonFullInfo> {
-    const pokemon = await this.getPokemon(idOrName);
+  async getPokemon(idOrName: number | string): Promise<Pokemon> {
+    const pokemonData = await fetchAPI<Omit<Pokemon, 'rarity' | 'evolutionChain'>>(
+      `${BASE_URL}/pokemon/${idOrName}/`
+    );
     
-    if (!pokemon.species?.url) {
+    if (!pokemonData.species?.url) {
       throw new Error('Не удалось получить информацию о виде покемона');
     }
     
-    const species = await fetchAPI<PokemonSpecies & { evolution_chain: NamedAPIResource }>(pokemon.species.url);
+    const species = await fetchAPI<PokemonSpecies & { evolution_chain: NamedAPIResource }>(
+      pokemonData.species.url
+    );
     
     const rarity = getRarityFromSpecies(
       species.is_legendary,
@@ -246,9 +192,41 @@ export const POKEMON_API = {
     const evolutionChain = await fetchAPI<EvolutionChain>(species.evolution_chain.url);
     
     return {
-      pokemon: { ...pokemon, rarity },
+      ...pokemonData,
       rarity,
       evolutionChain,
     };
   },
+
+  /**
+   * Получить список покемонов для галереи с полной информацией
+   * Включает: основную информацию, типы, редкость и цепочку эволюции для каждого покемона
+   * @param limit - Количество покемонов (по умолчанию 8)
+   * @param offset - Смещение для пагинации (по умолчанию 0)
+   * @returns Массив покемонов с полной информацией включая редкость и цепочку эволюции
+   */
+  async getPokemons(limit: number = 8, offset: number = 0): Promise<Pokemon[]> {
+    const listResponse = await fetchAPI<PokemonListResponse>(
+      `${BASE_URL}/pokemon/?limit=${limit}&offset=${offset}`
+    );
+    
+    const promises = listResponse.results.map(async (item) => {
+      const id = item.url.split('/').filter(Boolean).pop();
+      const pokemonId = id || item.name;
+      
+      return await this.getPokemon(pokemonId);
+    });
+    
+    return Promise.all(promises);
+  },
+
+  /**
+   * Получить список всех типов покемонов (fire, water, grass и т.д.)
+   * @returns Массив всех доступных типов
+   */
+  async getAllTypes(): Promise<NamedAPIResource[]> {
+    const response = await fetchAPI<TypeListResponse>(`${BASE_URL}/type/`);
+    return response.results;
+  },
+
 };
