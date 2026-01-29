@@ -1,13 +1,13 @@
 export interface PokemonFilters {
     power: string;
     rarity: string;
-    element: string;
+    element: string[]; 
 }
 
 export const POWER_FILTERS = {
     label: 'По силе',
     options: [
-        { value: 'all', label: 'Все' },
+        { value: 'all', label: 'Любая сила' },
         { value: 'weak', label: 'Слабые' },
         { value: 'average', label: 'Средние' },
         { value: 'strong', label: 'Сильные' },
@@ -17,7 +17,7 @@ export const POWER_FILTERS = {
 export const RARITY_FILTERS = {
     label: 'По редкости',
     options: [
-        { value: 'all', label: 'Все' },
+        { value: 'all', label: 'Любая редкость' },
         { value: 'common', label: 'Обычные' },
         { value: 'legendary', label: 'Легендарные' },
         { value: 'mythical', label: 'Мифические' },

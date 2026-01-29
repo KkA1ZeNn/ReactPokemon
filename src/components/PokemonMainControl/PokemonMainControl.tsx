@@ -1,6 +1,8 @@
 import './PokemonMainControl.css'
 import { POWER_FILTERS, RARITY_FILTERS, type PokemonFilters } from '../../types/pokemonFiltes';
 import type { NamedAPIResource } from '../../api/pokemonApi/pokemonsApi';
+import { TYPE_TRANSLATIONS } from '../../constants/pokemonConstants';
+import { useState, useRef, useEffect } from 'react';
 
 interface PokemonMainControlProps {
    filters: PokemonFilters;
@@ -17,6 +19,8 @@ const PokemonMainControl = ({
    setSearchQuery,
    pokemonTypes
 }: PokemonMainControlProps) => {
+   const [isElementDropdownOpen, setIsElementDropdownOpen] = useState(false);
+   const elementDropdownRef = useRef<HTMLDivElement>(null);
 
    const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
       setSearchQuery(event.target.value);
@@ -30,9 +34,29 @@ const PokemonMainControl = ({
       setFilters({ ...filters, rarity: event.target.value });
    };
 
-   const handleElementChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-      setFilters({ ...filters, element: event.target.value });
+   const handleElementToggle = (typeName: string) => {
+      const currentElements = filters.element;
+      const newElements = currentElements.includes(typeName)
+         ? currentElements.filter(el => el !== typeName)
+         : [...currentElements, typeName];
+      setFilters({ ...filters, element: newElements });
    };
+
+   useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+         if (elementDropdownRef.current && !elementDropdownRef.current.contains(event.target as Node)) {
+            setIsElementDropdownOpen(false);
+         }
+      };
+
+      if (isElementDropdownOpen) {
+         document.addEventListener('mousedown', handleClickOutside);
+      }
+
+      return () => {
+         document.removeEventListener('mousedown', handleClickOutside);
+      };
+   }, [isElementDropdownOpen]);
 
    return (
       <>
@@ -70,18 +94,42 @@ const PokemonMainControl = ({
                   </select>
 
                   {/* Фильтр по типу/стихии (загружается из API) */}
-                  <select
-                     className='selectbar__selector'
-                     value={filters.element}
-                     onChange={handleElementChange}
-                  >
-                     <option value="all">Все</option>
-                     {pokemonTypes.map((type) => (
-                        <option key={type.name} value={type.name}>
-                           {type.name.charAt(0).toUpperCase() + type.name.slice(1)}
-                        </option>
-                     ))}
-                  </select>
+                  <div className='selectbar__custom-select' ref={elementDropdownRef}>
+                     <div
+                        className='selectbar__selector selectbar__selector--custom'
+                        onClick={() => setIsElementDropdownOpen(!isElementDropdownOpen)}
+                     >
+                        По стихии
+                     </div>
+                     {isElementDropdownOpen && (
+                        <div className='selectbar__dropdown'>
+                           <div className='selectbar__dropdown-content'>
+                              {pokemonTypes.map((type) => {
+                                 if (TYPE_TRANSLATIONS[type.name]) {
+                                    const isSelected = filters.element.includes(type.name);
+                                    return (
+                                       <label
+                                          key={type.name}
+                                          className='selectbar__option'
+                                       >
+                                          <span className='selectbar__option-text'>
+                                             {TYPE_TRANSLATIONS[type.name]}
+                                          </span>
+                                          <input
+                                             type="checkbox"
+                                             checked={isSelected}
+                                             onChange={() => handleElementToggle(type.name)}
+                                             className='selectbar__radio'
+                                          />
+                                       </label>
+                                    )
+                                 }
+                                 return null;
+                              })}
+                           </div>
+                        </div>
+                     )}
+                  </div>
                </div>
             </div>
          </div>

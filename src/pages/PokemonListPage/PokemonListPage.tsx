@@ -30,7 +30,7 @@ const PokemonListPage = () => {
     const [filters, setFilters] = useState<PokemonFilters>({
         power: 'all',
         rarity: 'all',
-        element: 'all'
+        element: [] // Пустой массив для множественного выбора
     });
 
     const [searchQuery, setSearchQuery] = useState('');
@@ -63,8 +63,8 @@ const PokemonListPage = () => {
                 (pokemon.rarity && pokemon.rarity === filters.rarity);
 
             // Фильтр по типу/стихии
-            const passesTypeFilter = filters.element === 'all' ||
-                pokemon.types.some(t => t.type.name === filters.element);
+            const passesTypeFilter = filters.element.length === 0 ||
+                pokemon.types.some(t => filters.element.includes(t.type.name));
 
             return passesPowerFilter && passesRarityFilter && passesTypeFilter;
         });
